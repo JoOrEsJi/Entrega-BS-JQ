@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+	<!-- Evita que hayan problemas con caracteres especiales -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- Ajusta la página al dispositivo desde donde se está visitando-->
+    <title>Buscador de Repositorios de GitHub</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom Styling */
+        #botón {
+            font-size: 1.1em;
+            padding: 12px 24px;
+        }
+        #repos-table th {
+            background-color: #99ffcc;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal -->
+    <div class="container mt-5">
+        <!-- Página principal -->
+        <div id="input" class="text-center">
+            <h3 class="mb-4">Buscador de Repositorios en GitHub</h3>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <label for="usuario">Introduce un usuario:</label>
+                    <input type="text" id="usuario" class="form-control" placeholder="P.ej. JoOrEsJi">
+                    <button id="botón" class="btn btn-success btn-block mt-3" disabled>Buscar Repos</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página de resultados -->
+        <div id="resultado" class="mt-5" style="display: none;">
+            <h4 class="text-center">Repositorios de <span id="output-username"></span></h4>
+            <table id="repos-table" class="table table-bordered mt-4">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+						<th>Estrellas</th>
+                    </tr>
+                </thead>
+                <tbody id="repo-body"></tbody>
+            </table>
+            <button id="go-back" class="btn btn-secondary mt-4">Volver</button>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() 
+		{
+            // El botón solo se puede clicar cuando hay input
+            $('#usuario').on('input', function() 
+			{
+                let userInput = $(this).val().trim();
+                $('#botón').prop('disabled', userInput === '');
+            });
+
+            // Función para buscar repositorios
+            $('#botón').on('click', function() 
+			{
+                let username = $('#usuario').val().trim();
+                if (!username) 
+				{
+                    alert('Introduce un nombre de usuario válido.');
+                    return;
+                }
+
+                $.ajax(
+				{
+                    url: `https://api.github.com/users/${username}/repos`,
+                    method: 'GET',
+                    success: function(repos) 
+					{
+                        $('#repo-body').empty();
+                        if (repos.length > 0) 
+						{
+                            $('#output-username').text(username);
+                            repos.forEach(function(repo) 
+							{
+                                let row = `
+                                    <tr>
+                                        <td><a href="${repo.html_url}" target="_blank">${repo.name}</a></td>
+                                        <td>${repo.description || 'Sin descripción'}</td>
+										<td>${repo.stargazers_count} estrellas</td>		
+                                    </tr>
+                                `;
+                                $('#repo-body').append(row);
+                            });
+                            $('#input').hide();
+                            $('#resultado').show();
+                        } 
+						else 
+						{
+                            alert('Este usuario no tiene repositorios.');
+                        }
+                    },
+                    error: function() 
+					{
+                        alert('Hubo un error. Asegúrate de que el nombre de usuario es válido.');
+                    }
+                });
+            });
+
+            // Back button functionality
+            $('#go-back').on('click', function() 
+			{
+                $('#resultado').hide();
+                $('#input').show();
+                $('#usuario').val('');
+                $('#botón').prop('disabled', true);
+            });
+        });
+    </script>
+</body>
+</html>
